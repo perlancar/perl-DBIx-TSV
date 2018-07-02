@@ -19,14 +19,18 @@ sub import {
 package
     DBI::db;
 
-sub selectrow_tsv { goto &selectrow_texttable }
-sub selectall_tsv { goto &selectall_texttable }
+sub selectrow_tsv          { local %DBIx::TextTableAny::opts = (backend => 'Text::Table::TSV', header_row => 1); &selectrow_texttable(@_) }
+sub selectall_tsv          { local %DBIx::TextTableAny::opts = (backend => 'Text::Table::TSV', header_row => 1); &selectall_texttable(@_) }
+sub selectrow_tsv_noheader { local %DBIx::TextTableAny::opts = (backend => 'Text::Table::TSV', header_row => 0); &selectrow_texttable(@_) }
+sub selectall_tsv_noheader { local %DBIx::TextTableAny::opts = (backend => 'Text::Table::TSV', header_row => 0); &selectall_texttable(@_) }
 
 package
     DBI::st;
 
-sub fetchrow_tsv { goto &fetchrow_texttable }
-sub fetchall_tsv { goto &fetchall_texttable }
+sub fetchrow_tsv          { local %DBIx::TextTableAny::opts = (backend => 'Text::Table::TSV', header_row => 1); &fetchrow_texttable(@_) }
+sub fetchall_tsv          { local %DBIx::TextTableAny::opts = (backend => 'Text::Table::TSV', header_row => 1); &fetchall_texttable(@_) }
+sub fetchrow_tsv_noheader { local %DBIx::TextTableAny::opts = (backend => 'Text::Table::TSV', header_row => 0); &fetchrow_texttable(@_) }
+sub fetchall_tsv_noheader { local %DBIx::TextTableAny::opts = (backend => 'Text::Table::TSV', header_row => 0); &fetchall_texttable(@_) }
 
 1;
 # ABSTRACT: Generate TSV from SQL query result
@@ -39,18 +43,19 @@ sub fetchall_tsv { goto &fetchall_texttable }
  use DBIx::TSV;
  my $dbh = DBI->connect("dbi:mysql:database=mydb", "someuser", "somepass");
 
-Selecting a row:
+Generating a row of TSV (with header):
 
  print $dbh->selectrow_tsv("SELECT * FROM member");
 
-Sample result (default backend is L<Text::Table::Tiny>):
+Generating a row of TSV (without header):
 
- Name    Rank    Serial
+Sample result:
+
  alice   pvt     123456
 
-Selecting all rows:
+Generating all rows (with header):
 
- print $dbh->selectrow_tsv("SELECT * FROM member");
+ print $dbh->selectall_tsv("SELECT * FROM member");
 
 Sample result:
 
@@ -59,20 +64,16 @@ Sample result:
  bob     cpl     98765321
  carol   brig gen        8745
 
-Setting other options:
+Generating all rows (without header):
 
- DBIx::TSV->import(header_row => 0);
+ print $dbh->selectall_tsv_noheader("SELECT * FROM member");
 
- my $sth = $dbh->prepare("SELECT * FROM member");
- $sth->execute;
+Statement handle versions:
 
+ print $sth->fetchrow_tsv;
+ print $sth->fetchrow_tsv_noheader;
  print $sth->fetchall_tsv;
-
-Sample result:
-
- alice   pvt     123456
- bob     cpl     98765321
- carol   brig gen        8745
+ print $sth->fetchall_tsv_noheader;
 
 
 =head1 DESCRIPTION
@@ -83,11 +84,15 @@ database handle:
 
  selectrow_tsv
  selectall_tsv
+ selectrow_tsv_noheader
+ selectall_tsv_noheader
 
 as well as the following methods to statement handle:
 
  fetchrow_tsv
  fetchall_tsv
+ fetchrow_tsv_noheader
+ fetchall_tsv_noheader
 
 The methods send the result of query to Text::Table::Any (using the
 L<Text::Table::TSV> backend) and return the rendered TSV data.
