@@ -2,3 +2,4 @@ DBIx-TSV-*
 .build
 *~
 nytprof*
+.DS_Store
